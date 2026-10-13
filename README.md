@@ -29,9 +29,11 @@ validation, and analytics-ready outputs.
 -   **Apache Spark / PySpark** --- distributed data processing
 -   **Delta Lake** --- lakehouse table storage and processing
 -   **Unity Catalog** --- data organization and access management
--   **Amazon S3** --- source-file storage used in the project scenario
+-   **Unity Catalog Volumes** --- storing and accessing source files
 -   **SQL** --- querying, transformations, and validation
--   **Databricks SQL / AI-BI tools** --- analytics and visualisation
+-   **Databricks SQL / dashboards** --- analytics and visualisation
+-   **Lakeflow Jobs / workflow orchestration** --- coordinating pipeline tasks
+-   **Genie** --- explored for AI-powered, natural-language analytics
 
 ## Architecture
 
@@ -44,7 +46,7 @@ The project follows the Medallion Architecture:
 Conceptual flow:
 
 ``` text
-Source Files (Amazon S3)
+Source Files / Databricks Volumes
         |
         v
 Ingestion into Databricks
@@ -62,8 +64,9 @@ Gold Layer
 Consolidated Analytics / Dashboards
 ```
 
-The exact path and processing logic for each dataset are defined by the
-project's notebooks and pipeline configuration.
+Pipeline tasks are orchestrated so that ingestion, transformation, and
+validation steps run in the appropriate sequence. The curated Gold data is
+then used for dashboards and business analysis.
 
 ## Data Organization
 
@@ -71,25 +74,21 @@ The Databricks workspace includes a catalog/schema structure and
 source-file volumes. The observed file layout includes:
 
 ``` text
-fmcg/
-├── bronze/
-└── default/
-    └── Volumes/
-        └── full_load/
-            └── full_load/
-                ├── customers/
-                ├── gross_price/
-                └── orders/
-                    ├── landing/
-                    └── processed/
+/Volumes/fmcg/default/full_load/full_load/
+├── customers/
+├── gross_price/
+├── products/
+└── orders/
+    ├── landing/
+    └── processed/
 ```
 
 -   **`landing/`** --- holds incoming source order files before
     processing.
 -   **`processed/`** --- holds order files produced after processing. In
     the current workspace, these appear as multiple CSV files.
--   **`customers/` and `gross_price/`** --- folders for the
-    corresponding source datasets.
+-   **`customers/`, `gross_price/`, and `products/`** --- folders for
+    the corresponding source datasets.
 
 The folder names describe the file workflow; the exact transformations
 should be verified in the relevant notebook or pipeline.
@@ -100,16 +99,18 @@ The observed Gold layer contains tables with names including:
 
 -   `dim_customers`
 -   `dim_date`
+-   `dim_gross_price`
 -   `dim_products`
 -   `fact_orders`
 -   `sb_dim_customers`
 -   `sb_dim_gross_price`
 -   `sb_dim_products`
+-   `sb_fact_orders`
 
-Some table names were truncated in the workspace view. The `sb_` prefix
-appears to distinguish acquired-company (Sports Bar) tables from the
-parent company's tables in this project scenario. Confirm each table's
-exact purpose and lineage from its schema and creation notebook.
+The `sb_` prefix distinguishes the additional source's dimension and
+fact tables from the existing Gold-layer tables. The fact tables contain
+order-level measures, while the dimension tables provide descriptive
+context for analytical queries.
 
 ## Fact Processing
 
@@ -147,37 +148,49 @@ expected results. Useful checks include:
 -   Correct relationships between fact and dimension tables
 -   Historical and incremental load results
 
+## Pipeline Orchestration
+
+Pipeline orchestration coordinates the processing steps and their
+execution order, helping make the workflow repeatable. The project
+workflow brings together data ingestion, transformation, fact and
+dimension processing, incremental loading, and validation.
+
 ## Analytics and Reporting
 
-The Gold layer is intended to provide business-ready data for reporting.
-Depending on the configured analytics solution, users can compare
-performance across the parent and acquired businesses, analyse products
-and orders, and explore trends using Databricks SQL, dashboards, or
-Genie.
+The Gold layer provides business-ready data for reporting. Dashboards
+present key results in a visual format, helping users review sales
+performance and explore product, customer, and order trends. Genie was
+also explored for AI-powered, natural-language analytics over the data.
 
-## Current Progress
+## What I Implemented and Learned
 
--   Reviewed the end-to-end FMCG data engineering architecture.
--   Explored the source-file layout for customers, gross price, and
-    orders.
--   Identified the `landing` and `processed` folders for order CSV
-    files.
--   Worked on fact processing and historical loading.
--   Continuing to understand incremental fact loading and validation.
+Through implementing the project, I gained hands-on experience with:
 
-## Next Steps
+- Building an end-to-end FMCG data engineering workflow in Databricks.
+- Processing data through the Bronze, Silver, and Gold layers.
+- Loading historical data and processing incremental fact data.
+- Preparing dimension and fact tables for analytics.
+- Consolidating data from multiple sources into the Gold layer.
+- Orchestrating pipeline tasks and validating processed outputs.
+- Creating dashboards and exploring Genie for AI-powered analytics.
 
--   Complete and verify historical fact processing.
--   Understand and test the incremental loading logic.
--   Validate the final Gold-layer tables.
--   Confirm how parent-company and acquired-company data are
-    consolidated.
--   Review the final analytics tables and dashboards.
+## Business Outcome
+
+The pipeline transforms raw business data into structured, analytics-ready
+datasets. These datasets support sales reporting, product-performance
+analysis, customer-trend analysis, dashboards, and more informed,
+data-driven business decisions.
+
+## Project Status
+
+The project workflow has been implemented and reviewed across historical
+loading, dimension processing, incremental fact processing, pipeline
+orchestration, and dashboarding. Validation and refinement can continue
+as data and reporting requirements evolve.
 
 ## Notes
 
-This README describes the project structure and learning progress based
-on the workspace components reviewed so far. Update the table names,
-source paths, transformation rules, orchestration details, and
-validation results as they are confirmed in the notebooks and pipeline
-code.
+Table names and folder paths reflect the Databricks workspace components
+observed during the project. Transformation rules and incremental-loading
+behaviour should be checked against the relevant notebooks and pipeline
+configuration when extending or maintaining the implementation.
